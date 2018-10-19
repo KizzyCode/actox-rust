@@ -1,0 +1,7 @@
+[package]
+name = "actox"
+version = "0.1.0"
+authors = ["Keziah Biermann <development@kizzycode.de>"]
+
+[dependencies]
+etrace = "1.1.1"
