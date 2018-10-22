@@ -10,32 +10,17 @@
 
 #[macro_use] pub extern crate etrace;
 
-/// Log a warning (with line info etc.)
-///
-/// Parameter `$($warning:expr),+`: A variadic list of items that implement `::std::fmt::Display`
-#[macro_export] macro_rules! warn {
-	($($warning:expr),+) => ({
-		// Concat warning
-		use ::std::fmt::Write;
-		let mut warning = ::std::string::String::new();
-		$(write!(&mut warning, "{}", $warning).unwrap();)+
-		
-		// Create and print error
-		eprintln!("{}", new_err!($crate::ActorError::Warning, warning));
-	});
-}
-
 mod event_loop;
 mod actor_pool;
 
 
-pub use ::event_loop::{ EventSource, EventHandler, EventLoop };
+pub use ::event_loop::{ Event, BlockingEventSource, PollingEventSource, EventHandler, EventLoop };
 pub use ::actor_pool::ActorPool;
 
 
 /// An actor related error
-#[derive(Debug, Clone)]
-pub enum ActorError {
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum ActoxError {
 	/// A warning (usually used for logging purposes)
 	Warning,
 	/// An element was not found
@@ -45,9 +30,14 @@ pub enum ActorError {
 	/// The endpoint is not connected (anymore)
 	EndpointNotConnected,
 	/// Invalid message type
-	TypeMismatch,
-	/// Another `etrace` error
-	OtherError(::etrace::WrappedError)
+	TypeMismatch
 }
-/// Syntactic sugar for `::std::result::Result<T, ::etrace::Error<ActorError>>`
-pub type Result<T> = ::std::result::Result<T, ::etrace::Error<ActorError>>;
+impl From<::etrace::Error<ActoxError>> for ActoxError {
+	fn from(error: ::etrace::Error<ActoxError>) -> Self {
+		return error.kind
+	}
+}
+/// Syntactic sugar for `Result<T, ::etrace::Error<ActoxError>>`
+pub type ActoxResult<T> = Result<T, ::etrace::Error<ActoxError>>;
+
+
