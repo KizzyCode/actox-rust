@@ -1,9 +1,32 @@
 extern crate actox;
-extern crate rand;
 
 use ::actox::{ Event, BlockingEventSource, PollingEventSource, EventHandler, EventLoop };
-use ::rand::{ Rng, thread_rng };
-use ::std::{ thread, time::Duration };
+use ::std::{
+	thread, cell::RefCell, collections::hash_map::DefaultHasher, hash::{ Hasher, Hash },
+	time::{ Duration, UNIX_EPOCH },
+};
+
+
+pub struct Prng64;
+impl Prng64 {
+	pub fn next() -> u64 {
+		thread_local!(static RAND_STATE: RefCell<DefaultHasher> = RefCell::new(DefaultHasher::new()));
+		RAND_STATE.with(|state: &RefCell<DefaultHasher>| {
+			// Capture state
+			let mut state = state.borrow_mut();
+			
+			// Update state and return hash
+			thread::current().id().hash(&mut *state);
+			Self::time_now_ns().hash(&mut *state);
+			state.finish()
+		})
+	}
+	
+	fn time_now_ns() -> u64 {
+		let now = UNIX_EPOCH.elapsed().unwrap();
+		now.as_secs() + (now.subsec_nanos() as u64 * 1_000_000_000)
+	}
+}
 
 
 struct TestEventSource {
@@ -23,9 +46,9 @@ impl BlockingEventSource<u128, &'static str> for TestEventSource {
 			return Some(Err(Event{ payload: "Limit reached", source: Box::new(self.name.clone()) }))
 		}
 		
-		// Sleep from 0 to 100 ms and determine if we should returns sth. or not
-		thread::sleep(Duration::from_millis(thread_rng().gen_range(0, 100)));
-		if thread_rng().gen() { return None }
+		// Sleep from 0 to 128 ms and determine if we should returns sth. or not
+		thread::sleep(Duration::from_millis(Prng64::next() % 128));
+		if Prng64::next() % 2 == 0 { return None }
 		
 		// Get event and increment counter
 		let result = Ok(Event{ payload: self.counter, source: Box::new(self.name.clone()) });
@@ -41,7 +64,7 @@ impl PollingEventSource<u128, &'static str> for TestEventSource {
 		}
 		
 		// Determine if we should returns sth. or not
-		if thread_rng().gen() { return None }
+		if Prng64::next() % 2 == 0 { return None }
 		
 		// Get event and increment counter
 		let result = Ok(Event{ payload: self.counter, source: Box::new(self.name.clone()) });
@@ -78,7 +101,7 @@ impl PollingEventSource<u128, &'static str> for TestEventSource {
 	// Create and populate loop
 	let mut event_loop = EventLoop::new();
 	for source in sources {
-		if thread_rng().gen() { event_loop.add_blocking_source(source); }
+		if Prng64::next() % 2 == 0 { event_loop.add_blocking_source(source); }
 			else { event_loop.add_polling_source(source); }
 	}
 	

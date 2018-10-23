@@ -1,6 +1,6 @@
 [package]
 name = "actox"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Keziah Biermann <development@kizzycode.de>"]
 description = "This crate implements a simple event-loop and a cheap actor implementation with a global actor-pool"
 license = "BSD-2-Clause OR MIT"
@@ -13,6 +13,3 @@ appveyor = { repository = "KizzyCode/actox" }
 
 [dependencies]
 etrace = "1.1.1"
-
-[dev-dependencies]
-rand = "0.5.5"
