@@ -3,7 +3,6 @@
 [![Travis CI](https://travis-ci.org/KizzyCode/actox.svg?branch=master)](https://travis-ci.org/KizzyCode/actox)
 [![AppVeyor CI](https://ci.appveyor.com/api/projects/status/github/KizzyCode/actox?svg=true)](https://ci.appveyor.com/project/KizzyCode/actox)
 
-
 # asn1_der
 Welcome to my `actox`-library 🎉
 
@@ -29,7 +28,8 @@ understand the crates your'e using, this crate _could_ suite you 😇
 
 
 # Dependencies
-Only my [`etrace`-crate](https://github.com/KizzyCode/etrace)
+My [`etrace`-crate](https://crates.io/crates/etrace) for traceable error handling and the
+[`rand`-crate](https://crates.io/crates/rand) _for testing purposes_ (will not be included in your release builds).
 
 
 # Build Documentation and Library:
