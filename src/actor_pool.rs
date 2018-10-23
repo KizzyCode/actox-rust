@@ -1,7 +1,7 @@
 use ::{ ActoxError, ActoxResult };
 use ::std::{
 	ptr, collections::HashMap, any::Any,
-	sync::{ mpsc::Sender, Mutex, Arc, atomic::{ AtomicPtr, Ordering } }
+	sync::{ mpsc::Sender, Mutex, atomic::{ AtomicPtr, Ordering } }
 };
 
 
@@ -18,8 +18,7 @@ impl ActorPool {
 	/// is registered
 	pub fn register<T: Send + 'static>(actor_input: Sender<T>, name: impl ToString) -> ActoxResult<()> {
 		// Get pool instance
-		let pool = Self::pool();
-		let mut pool = pool.lock().unwrap();
+		let mut pool = Self::pool().lock().unwrap();
 		
 		// Insert sender
 		let name = name.to_string();
@@ -35,8 +34,7 @@ impl ActorPool {
 	/// registered
 	pub fn unregister(name: impl ToString) -> ActoxResult<()> {
 		// Get pool instance
-		let pool = Self::pool();
-		let mut pool = pool.lock().unwrap();
+		let mut pool = Self::pool().lock().unwrap();
 		
 		// Get and cast actor
 		some_or!(pool.remove(&name.to_string()), throw_err!(ActoxError::NotFound));
@@ -45,8 +43,7 @@ impl ActorPool {
 	/// The currently registered actors
 	pub fn registered() -> Vec<String> {
 		// Get pool instance and clone keys
-		let pool = Self::pool();
-		let pool = pool.lock().unwrap();
+		let pool = Self::pool().lock().unwrap();
 		pool.keys().map(|key| key.clone()).collect()
 	}
 	
@@ -59,8 +56,7 @@ impl ActorPool {
 	/// Returns either _nothing_ or a corresponding `ActoxError`
 	pub fn send<T: Send + 'static>(name: impl ToString, message: T) -> ActoxResult<()> {
 		// Get pool instance
-		let pool = Self::pool();
-		let pool = pool.lock().unwrap();
+		let pool = Self::pool().lock().unwrap();
 		
 		// Get and cast actor
 		let actor: &Box<Any> = some_or!(pool.get(&name.to_string()), throw_err!(ActoxError::NotFound));
@@ -71,14 +67,14 @@ impl ActorPool {
 	}
 	
 	/// The global event pool
-	fn pool() -> Arc<Mutex<HashMap<String, Box<Any>>>> {
-		static POOL: AtomicPtr<Arc<Mutex<HashMap<String, Box<Any>>>>> =
+	fn pool() -> &'static Mutex<HashMap<String, Box<Any>>> {
+		static POOL: AtomicPtr<Mutex<HashMap<String, Box<Any>>>> =
 			AtomicPtr::new(ptr::null_mut());
 		POOL.compare_and_swap(
 			ptr::null_mut(),
-			Box::into_raw(Box::new(Arc::new(Mutex::new(HashMap::new())))),
+			Box::into_raw(Box::new(Mutex::new(HashMap::new()))),
 			Ordering::SeqCst
 		);
-		unsafe{ POOL.load(Ordering::SeqCst).as_ref().unwrap().clone() }
+		unsafe{ POOL.load(Ordering::SeqCst).as_ref().unwrap() }
 	}
 }
