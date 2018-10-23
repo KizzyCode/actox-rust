@@ -42,6 +42,12 @@ impl ActorPool {
 		some_or!(pool.remove(&name.to_string()), throw_err!(ActoxError::NotFound));
 		Ok(())
 	}
+	/// The currently registered actors
+	pub fn registered() -> Vec<String> {
+		// Get pool instance and clone keys
+		let pool = Self::pool();
+		pool.lock().unwrap().keys().map(|key| key.clone()).collect()
+	}
 	
 	/// Sends a `message` to an input-channel registered under `name`
 	///
