@@ -29,7 +29,8 @@ understand the crates your'e using, this crate _could_ suite you 😇
 
 # Dependencies
 My [`etrace`-crate](https://crates.io/crates/etrace) for traceable error handling and the
-[`rand`-crate](https://crates.io/crates/rand) _for testing purposes_ (will not be included in your release builds).
+[`rand`-crate](https://crates.io/crates/rand) _for testing purposes_ (= it is not propagated to other crates which
+depend on this crate).
 
 
 # Build Documentation and Library:
