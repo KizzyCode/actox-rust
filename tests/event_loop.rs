@@ -1,18 +1,19 @@
 extern crate actox;
+extern crate rand;
 
 use ::actox::{ Event, BlockingEventSource, PollingEventSource, EventHandler, EventLoop };
-use ::std::{ thread, time::{ Instant, Duration } };
+use ::rand::{ Rng, thread_rng };
+use ::std::{ thread, time::Duration };
 
 
 struct TestEventSource {
-	seed: Instant,
 	name: String,
 	counter: u128,
 	limit: u128
 }
 impl TestEventSource {
 	pub fn new(name: String, limit: u128) -> Self {
-		Self{ seed: Instant::now(), name, counter: 0, limit }
+		Self{ name, counter: 0, limit }
 	}
 }
 impl BlockingEventSource<u128, &'static str> for TestEventSource {
@@ -22,9 +23,9 @@ impl BlockingEventSource<u128, &'static str> for TestEventSource {
 			return Some(Err(Event{ payload: "Limit reached", source: Box::new(self.name.clone()) }))
 		}
 		
-		// Sleep from 0 to 50 ms and determine if we should returns sth. or not
-		thread::sleep(Duration::from_millis(self.seed.elapsed().subsec_nanos() as u64 % 100));
-		if self.seed.elapsed().subsec_nanos() % 2 == 0 { return None }
+		// Sleep from 0 to 100 ms and determine if we should returns sth. or not
+		thread::sleep(Duration::from_millis(thread_rng().gen_range(0, 100)));
+		if thread_rng().gen() { return None }
 		
 		// Get event and increment counter
 		let result = Ok(Event{ payload: self.counter, source: Box::new(self.name.clone()) });
@@ -40,7 +41,7 @@ impl PollingEventSource<u128, &'static str> for TestEventSource {
 		}
 		
 		// Determine if we should returns sth. or not
-		if self.seed.elapsed().subsec_nanos() % 2 != 0 { return None }
+		if thread_rng().gen() { return None }
 		
 		// Get event and increment counter
 		let result = Ok(Event{ payload: self.counter, source: Box::new(self.name.clone()) });
@@ -75,9 +76,9 @@ impl PollingEventSource<u128, &'static str> for TestEventSource {
 	let event_handler = TestEventHandler(0);
 	
 	// Create and populate loop
-	let (mut event_loop, seed) = (EventLoop::new(), Instant::now());
+	let mut event_loop = EventLoop::new();
 	for source in sources {
-		if seed.elapsed().subsec_nanos() % 2 == 0 { event_loop.add_blocking_source(source); }
+		if thread_rng().gen() { event_loop.add_blocking_source(source); }
 			else { event_loop.add_polling_source(source); }
 	}
 	

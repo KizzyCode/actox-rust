@@ -1,7 +1,7 @@
 extern crate actox;
 
 use ::actox::{ ActoxError, ActorPool, Event, EventHandler, EventLoop };
-use ::std::{ sync::mpsc::{ self, Sender } };
+use ::std::sync::mpsc::{ self, Sender };
 
 
 enum Message {

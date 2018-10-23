@@ -13,3 +13,6 @@ appveyor = { repository = "KizzyCode/actox" }
 
 [dependencies]
 etrace = "1.1.1"
+
+[dev-dependencies]
+rand = "0.5.5"
