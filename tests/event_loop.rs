@@ -24,7 +24,7 @@ impl Prng64 {
 	
 	fn time_now_ns() -> u64 {
 		let now = UNIX_EPOCH.elapsed().unwrap();
-		now.as_secs() + (now.subsec_nanos() as u64 * 1_000_000_000)
+		(now.as_secs() * 1_000_000_000) + (now.subsec_nanos() as u64)
 	}
 }
 
