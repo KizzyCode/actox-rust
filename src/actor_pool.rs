@@ -46,7 +46,8 @@ impl ActorPool {
 	pub fn registered() -> Vec<String> {
 		// Get pool instance and clone keys
 		let pool = Self::pool();
-		pool.lock().unwrap().keys().map(|key| key.clone()).collect()
+		let pool = pool.lock().unwrap();
+		pool.keys().map(|key| key.clone()).collect()
 	}
 	
 	/// Sends a `message` to an input-channel registered under `name`
