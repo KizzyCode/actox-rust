@@ -64,14 +64,14 @@ impl<E: Send + 'static, R: Send + 'static> EventLoop<E, R> {
 		Self{ blocking: Vec::new(), polling: VecDeque::new() }
 	}
 	
-	/// Adds the blocking `source` to the `EventLoop`
+	/// Adds a blocking `source` to the `EventLoop`
 	///
 	/// Parameter `source`: The `BlockingEventSource` to add
 	pub fn add_blocking_source(&mut self, source: impl BlockingEventSource<E, R>) -> &mut Self {
 		self.blocking.push(Box::new(source));
 		self
 	}
-	/// Adds the polling `source` to the `EventLoop`
+	/// Adds a polling `source` to the `EventLoop`
 	///
 	/// Parameter `source`: The `BlockingEventSource` to add
 	pub fn add_polling_source(&mut self, source: impl PollingEventSource<E, R>) -> &mut Self {

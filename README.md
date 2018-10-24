@@ -11,7 +11,7 @@ Welcome to my `actox`-library 🎉
 This crate is small and nearly dependency-less crate that implements a simple aggregating event-loop and a cheap actor
 implementation with a global actor-pool.
 
-The event-loop support two types of event sources: blocking ones and polling ones. Blocking ones are especially useful
+The event-loop supports two types of event sources: blocking ones and polling ones. Blocking ones are especially useful
 if you only have a non-blocking API available (e.g. DNS-resolution) - the downside of them is that each blocking source
 needs to be queried in it's own thread. On the opposite the polling sources do not block and are queried in a single
 separate thread (thus requiring much less overhead).
