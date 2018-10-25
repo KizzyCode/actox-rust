@@ -1,6 +1,6 @@
 extern crate actox;
 
-use ::actox::{ Event, BlockingEventSource, PollingEventSource, EventHandler, EventLoop };
+use ::actox::{ BlockingEventSource, PollingEventSource, EventHandler, EventLoop };
 use ::std::{
 	thread, cell::RefCell, collections::hash_map::DefaultHasher, hash::{ Hasher, Hash },
 	time::{ Duration, UNIX_EPOCH },
@@ -30,44 +30,41 @@ impl Prng64 {
 
 
 struct TestEventSource {
-	name: String,
 	counter: u128,
 	limit: u128
 }
 impl TestEventSource {
-	pub fn new(name: String, limit: u128) -> Self {
-		Self{ name, counter: 0, limit }
+	pub fn new(limit: u128) -> Self {
+		Self{ counter: 0, limit }
 	}
 }
 impl BlockingEventSource<u128, &'static str> for TestEventSource {
-	fn wait(&mut self) -> Option<Result<Event<u128>, Event<&'static str>>> {
+	fn wait(&mut self) -> Option<Result<u128, &'static str>> {
 		// Check for limit
-		if self.counter == self.limit {
-			return Some(Err(Event{ payload: "Limit reached", source: Box::new(self.name.clone()) }))
-		}
+		if self.counter == self.limit { return Some(Err("Limit reached")) }
 		
 		// Sleep from 0 to 128 ms and determine if we should returns sth. or not
 		thread::sleep(Duration::from_millis(Prng64::next() % 128));
 		if Prng64::next() % 2 == 0 { return None }
 		
 		// Get event and increment counter
-		let result = Ok(Event{ payload: self.counter, source: Box::new(self.name.clone()) });
+		let result = Ok(self.counter);
 		self.counter += 1;
 		Some(result)
 	}
 }
 impl PollingEventSource<u128, &'static str> for TestEventSource {
-	fn poll(&mut self) -> Option<Result<Event<u128>, Event<&'static str>>> {
+	fn poll(&mut self) -> Option<Result<u128, &'static str>> {
 		// Check for limit
 		if self.counter == self.limit {
-			return Some(Err(Event{ payload: "Limit reached", source: Box::new(self.name.clone()) }))
+			return Some(Err("Limit reached"))
 		}
 		
 		// Determine if we should returns sth. or not
 		if Prng64::next() % 2 == 0 { return None }
 		
 		// Get event and increment counter
-		let result = Ok(Event{ payload: self.counter, source: Box::new(self.name.clone()) });
+		let result = Ok(self.counter);
 		self.counter += 1;
 		Some(result)
 	}
@@ -83,16 +80,16 @@ impl PollingEventSource<u128, &'static str> for TestEventSource {
 	
 	// Create event sources
 	let sources: Vec<TestEventSource> = range.clone()
-		.map(|i| TestEventSource::new(format!("<TestEventSource>::{}", i), i))
+		.map(|i| TestEventSource::new(i))
 		.collect();
 	
 	// Create event handler
 	struct TestEventHandler(u128);
 	impl EventHandler<u128, &'static str> for TestEventHandler {
-		fn handle_event(&mut self, event: Result<Event<u128>, Event<&'static str>>) -> Result<(), &'static str> {
+		fn handle_event(&mut self, event: Result<u128, &'static str>) -> Result<(), &'static str> {
 			Ok(match event {
-				Ok(event) => self.0 += event.payload,
-				Err(event) => eprintln!("Source \"{}\" failed with error: {}", event.source.as_ref().as_ref(), event.payload)
+				Ok(event) => self.0 += event,
+				Err(event) => eprintln!("Source failed with error: {}", event)
 			})
 		}
 	}

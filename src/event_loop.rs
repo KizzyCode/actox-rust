@@ -6,26 +6,17 @@ use ::std::{
 };
 
 
-/// An event returned by an event source
-pub struct Event<E: Send + 'static> {
-	/// The payload returned by the event source
-	pub payload: E,
-	/// The name/identifier of the source
-	pub source: Box<AsRef<str> + Send>
-}
-
-
 /// A blocking event source
 pub trait BlockingEventSource<E: Send + 'static, R: Send + 'static> where Self: Send + 'static {
 	/// Waits for the next event
 	///
 	/// _Note: This function may block forever until either an event or an error occurres. However
-	/// it is usually better to just block a reasonable time and return `Event::RetryLater` if no
-	/// event occurred._
+	/// it is usually better to just block a reasonable time and return `None` if no event
+	/// occurred._
 	///
 	/// Returns either _`Some(event_result)`_ if an event/error occurred or _`None`_ if nothing
 	/// happened
-	fn wait(&mut self) -> Option<Result<Event<E>, Event<R>>>;
+	fn wait(&mut self) -> Option<Result<E, R>>;
 }
 /// A polling event source
 pub trait PollingEventSource<E: Send + 'static, R: Send + 'static> where Self: Send + 'static {
@@ -36,7 +27,7 @@ pub trait PollingEventSource<E: Send + 'static, R: Send + 'static> where Self: S
 	///
 	/// Returns either _`Some(event_result)`_ if an event/error occurred or _`None`_ if nothing
 	/// happened
-	fn poll(&mut self) -> Option<Result<Event<E>, Event<R>>>;
+	fn poll(&mut self) -> Option<Result<E, R>>;
 }
 
 
@@ -48,7 +39,7 @@ pub trait EventHandler<E: Send + 'static, R: Send + 'static> {
 	/// this error__
 	///
 	/// Returns either _nothing_ or a __fatal__ error
-	fn handle_event(&mut self, event: Result<Event<E>, Event<R>>) -> Result<(), R>;
+	fn handle_event(&mut self, event: Result<E, R>) -> Result<(), R>;
 }
 
 
@@ -104,7 +95,7 @@ impl<E: Send + 'static, R: Send + 'static> EventLoop<E, R> {
 		// Start event loop
 		'event_loop: loop {
 			// Receive event from aggregator and handle event
-			let event: Option<Result<Event<E>, Event<R>>> = ok_or!(aggregator.recv(), return Ok(handler));
+			let event: Option<Result<E, R>> = ok_or!(aggregator.recv(), return Ok(handler));
 			if let Some(e) = event { handler.handle_event(e)?; }
 		}
 	}
@@ -129,10 +120,7 @@ impl<E: Send + 'static, R: Send + 'static> EventLoop<E, R> {
 		try_err!(ActorPool::register(sender, name.to_string()));
 		
 		// Create event source for `receiver`
-		self.add_polling_source(MpscEventSource {
-			input: receiver,
-			name: format!("\"{}\"::ActorInput", name.to_string())
-		});
+		self.add_polling_source(MpscEventSource{ input: receiver });
 		
 		// Start runloop async
 		let name = name.to_string();
@@ -145,7 +133,7 @@ impl<E: Send + 'static, R: Send + 'static> EventLoop<E, R> {
 	
 	
 	/// Starts a background thread to wait for and aggregate events of the blocking `source`
-	fn aggregate_blocking_source_async(mut source: Box<BlockingEventSource<E, R>>, aggregator: SyncSender<Option<Result<Event<E>, Event<R>>>>) {
+	fn aggregate_blocking_source_async(mut source: Box<BlockingEventSource<E, R>>, aggregator: SyncSender<Option<Result<E, R>>>) {
 		thread::spawn(move || {
 			let mut stop = false;
 			while !stop {
@@ -159,7 +147,7 @@ impl<E: Send + 'static, R: Send + 'static> EventLoop<E, R> {
 		});
 	}
 	/// Starts a background thread to wait for and aggregate events of the polling `sources`
-	fn aggregate_polling_sources_async(mut sources: VecDeque<Box<PollingEventSource<E, R>>>, aggregator: SyncSender<Option<Result<Event<E>, Event<R>>>>) {
+	fn aggregate_polling_sources_async(mut sources: VecDeque<Box<PollingEventSource<E, R>>>, aggregator: SyncSender<Option<Result<E, R>>>) {
 		thread::spawn(move || while !sources.is_empty() {
 			// Capture if a source had an event
 			let mut had_event = false;
@@ -190,20 +178,15 @@ impl<E: Send + 'static, R: Send + 'static> EventLoop<E, R> {
 
 /// An event source for a `mpsc::Receiver`
 struct MpscEventSource<E: Send + 'static> {
-	input: Receiver<E>,
-	name: String
+	input: Receiver<E>
 }
 impl<E: Send + 'static, R: Send + 'static + From<Error<ActoxError>>> PollingEventSource<E, R> for MpscEventSource<E> {
-	fn poll(&mut self) -> Option<Result<Event<E>, Event<R>>> {
+	fn poll(&mut self) -> Option<Result<E, R>> {
 		match self.input.try_recv() {
-			Ok(event) => Some(Ok(Event {
-				payload: event,
-				source: Box::new(self.name.clone())
-			})),
-			Err(TryRecvError::Disconnected) => Some(Err(Event {
-				payload: new_err!(ActoxError::EndpointNotConnected).into(),
-				source: Box::new(self.name.clone())
-			})),
+			Ok(event) =>
+				Some(Ok(event)),
+			Err(TryRecvError::Disconnected) =>
+				Some(Err(new_err!(ActoxError::EndpointNotConnected).into())),
 			Err(TryRecvError::Empty) => None
 		}
 	}

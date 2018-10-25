@@ -1,6 +1,6 @@
 extern crate actox;
 
-use ::actox::{ ActoxError, ActorPool, Event, EventHandler, EventLoop };
+use ::actox::{ ActoxError, ActorPool, EventHandler, EventLoop };
 use ::std::sync::mpsc::{ self, Sender };
 
 
@@ -15,13 +15,13 @@ struct Collector {
 	sum: u128
 }
 impl EventHandler<Message, ActoxError> for Collector {
-	fn handle_event(&mut self, event: Result<Event<Message>, Event<ActoxError>>) -> Result<(), ActoxError> {
+	fn handle_event(&mut self, event: Result<Message, ActoxError>) -> Result<(), ActoxError> {
 		let event = match event {
 			Ok(event) => event,
 			_ => unreachable!()
 		};
 		
-		Ok(match event.payload {
+		Ok(match event {
 			Message::Put(num) => self.sum += num,
 			Message::Get(sender) => sender.send(self.sum).unwrap(),
 		})

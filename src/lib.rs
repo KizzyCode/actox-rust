@@ -14,7 +14,7 @@ mod event_loop;
 mod actor_pool;
 
 
-pub use ::event_loop::{ Event, BlockingEventSource, PollingEventSource, EventHandler, EventLoop };
+pub use ::event_loop::{ BlockingEventSource, PollingEventSource, EventHandler, EventLoop };
 pub use ::actor_pool::ActorPool;
 
 

@@ -1,6 +1,6 @@
 [package]
 name = "actox"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Keziah Biermann <development@kizzycode.de>"]
 description = "This crate implements a simple event-loop and a cheap actor implementation with a global actor-pool"
 license = "BSD-2-Clause OR MIT"
