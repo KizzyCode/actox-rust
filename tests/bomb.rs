@@ -1,7 +1,3 @@
-//! Implements a stress test
-//!
-//! Run with: `cargo test --release test_bomb -- --ignored`
-
 use actox::{Bus, Subscriber};
 use std::{thread, time::Duration};
 
