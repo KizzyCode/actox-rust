@@ -1,22 +1,22 @@
-use actox::{Dispatch, Subscriber};
+use actox::{Bus, Subscriber};
 use std::{thread, time::Duration};
 
 #[test]
 fn test_subscribe() {
-    // Prepare dispatch
-    let dispatch = Dispatch::new();
+    // Prepare bus
+    let bus = Bus::new();
     let topic = String::from("dispatch/test/subscribe");
     let message = "Dispatch message";
 
     // Register new subscribers
     let (subscriber_a, subscriber_b) = (Subscriber::new(1024), Subscriber::new(1204));
-    dispatch.subscribe(&topic, &subscriber_a);
-    dispatch.subscribe(&topic, &subscriber_b);
+    bus.subscribe(&topic, &subscriber_a);
+    bus.subscribe(&topic, &subscriber_b);
 
     // Start publisher
     thread::spawn(move || {
         thread::sleep(Duration::from_secs(1));
-        dispatch.publish(&topic, message);
+        bus.publish(&topic, message);
     });
 
     // Wait for messages
@@ -30,17 +30,17 @@ fn test_subscribe() {
 
 #[test]
 fn test_unsubscribe() {
-    // Prepare dispatch
-    let dispatch = Dispatch::new();
+    // Prepare bus
+    let bus = Bus::new();
     let topic = String::from("dispatch/test/unsubscribe");
     let message = "Dispatch message";
 
     // Register new subscriber
     let subscriber = Subscriber::new(1024);
-    dispatch.subscribe(&topic, &subscriber);
+    bus.subscribe(&topic, &subscriber);
 
     // Start publisher
-    let (_topic, _dispatch) = (topic.clone(), dispatch.clone());
+    let (_topic, _dispatch) = (topic.clone(), bus.clone());
     thread::spawn(move || {
         thread::sleep(Duration::from_secs(1));
         _dispatch.publish(&_topic, message);
@@ -53,6 +53,6 @@ fn test_unsubscribe() {
     assert_eq!("Dispatch message", message, "Invalid message payload?!");
 
     // Unregister and wait for second message
-    dispatch.unsubscribe(&topic, &subscriber);
+    bus.unsubscribe(&topic, &subscriber);
     assert!(subscriber.read_timeout(Duration::from_secs(5)).is_none(), "Received unexpected dispatch message?!");
 }

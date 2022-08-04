@@ -18,11 +18,11 @@ type Lock<T> = Arc<RwLock<T>>;
 
 /// A shared message bus
 #[derive(Default, Clone)]
-pub struct Dispatch<T, M> {
+pub struct Bus<T, M> {
     /// The topics together with their subscribers
     topics: Lock<HashMap<T, HashMap<UniqueID, Subscription<M>>>>,
 }
-impl<T, M> Dispatch<T, M> {
+impl<T, M> Bus<T, M> {
     /// Creates a new bus
     pub fn new() -> Self {
         Self { topics: Arc::default() }

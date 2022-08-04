@@ -5,4 +5,4 @@ mod bus;
 mod queue;
 mod subscriber;
 
-pub use crate::{bus::Dispatch, subscriber::Subscriber};
+pub use crate::{bus::Bus, subscriber::Subscriber};
