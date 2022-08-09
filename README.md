@@ -4,7 +4,7 @@
 [![docs.rs](https://docs.rs/actox/badge.svg)](https://docs.rs/actox)
 [![crates.io](https://img.shields.io/crates/v/actox.svg)](https://crates.io/crates/actox)
 [![Download numbers](https://img.shields.io/crates/d/actox.svg)](https://crates.io/crates/actox)
-[![dependency status](https://deps.rs/crate/actox/0.2.0/status.svg)](https://deps.rs/crate/actox/0.2.0)
+[![dependency status](https://deps.rs/crate/actox/0.2.1/status.svg)](https://deps.rs/crate/actox/0.2.1)
 
 # actox
 Welcome to my `actox`-library 🎉
