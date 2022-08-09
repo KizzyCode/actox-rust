@@ -67,6 +67,17 @@ impl<T> Reader<T> {
         self.disconnected.load(SeqCst)
     }
 
+    /// Reads an element or returns `None` if the queue gets disconnected
+    pub fn read(&self) -> Option<T> {
+        match self.receiver.recv() {
+            Ok(element) => Some(element),
+            Err(_) => {
+                // Mark the connection as disconnected
+                self.disconnected.store(true, SeqCst);
+                None
+            }
+        }
+    }
     /// Tries to read an element
     pub fn try_read(&self) -> Option<T> {
         match self.receiver.try_recv() {
